@@ -89,6 +89,7 @@ DATABASES = {
         'NAME': os.getenv('MONGO_DB_NAME'),
         'CLIENT': {
             'host': os.getenv('MONGO_URI'),
+            'tls': True
         }
     }
 }
