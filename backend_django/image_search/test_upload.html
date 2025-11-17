@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Search - Upload & Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"],
+        textarea,
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+        
+        .file-label {
+            display: block;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-label:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        
+        .file-label.has-file {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .preview-image {
+            margin-top: 15px;
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .preview-image.show {
+            display: block;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .result-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .result-info {
+            flex: 1;
+        }
+        
+        .similarity-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #28a745;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 AI Image Search</h1>
+            <p>Upload, tìm kiếm và phát hiện ảnh trùng lặp bằng AI</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('upload')">📤 Upload Ảnh</button>
+            <button class="tab-btn" onclick="switchTab('search')">🔎 Tìm Kiếm</button>
+            <button class="tab-btn" onclick="switchTab('duplicates')">🔁 Ảnh Trùng</button>
+        </div>
+        
+        <!-- UPLOAD TAB -->
+        <div id="upload" class="tab-content active">
+            <h2>Upload Ảnh Mới</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label>Chọn ảnh:</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="uploadFile" accept="image/*" required>
+                        <label for="uploadFile" class="file-label" id="uploadLabel">
+                            📁 Click để chọn ảnh
+                        </label>
+                    </div>
+                    <img id="uploadPreview" class="preview-image">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tiêu đề:</label>
+                    <input type="text" id="title" placeholder="VD: Sunset Beach" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Mô tả:</label>
+                    <textarea id="description" rows="3" placeholder="Mô tả về ảnh..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">📤 Upload</button>
+            </form>
+            
+            <div class="loading" id="uploadLoading">
+                <div class="spinner"></div>
+                <p>Đang upload và xử lý ảnh...</p>
+            </div>
+            
+            <div id="uploadResult"></div>
+        </div>
+        
+        <!-- SEARCH TAB -->
+        <div id="search" class="tab-content">
+            <h2>Tìm Kiếm Ảnh Tương Tự</h2>
+            <form id="searchForm">
+                <div class="form-group">
+                    <label>Chọn ảnh để tìm kiếm:</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="searchFile" accept="image/*" required>
+                        <label for="searchFile" class="file-label" id="searchLabel">
+                            📁 Click để chọn ảnh
+                        </label>
+                    </div>
+                    <img id="searchPreview" class="preview-image">
+                </div>
+                
+                <div class="form-group">
+                    <label>Ngưỡng độ tương đồng (0.0 - 1.0):</label>
+                    <input type="number" id="threshold" value="0.7" min="0" max="1" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Số kết quả tối đa:</label>
+                    <input type="number" id="limit" value="10" min="1" max="50">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">🔎 Tìm Kiếm</button>
+            </form>
+            
+            <div class="loading" id="searchLoading">
+                <div class="spinner"></div>
+                <p>Đang tìm kiếm...</p>
+            </div>
+            
+            <div id="searchResults" class="results"></div>
+        </div>
+        
+        <!-- DUPLICATES TAB -->
+        <div id="duplicates" class="tab-content">
+            <h2>Tìm Ảnh Trùng Lặp</h2>
+            <div class="form-group">
+                <label>Ngưỡng phát hiện trùng (0.0 - 1.0):</label>
+                <input type="number" id="dupThreshold" value="0.95" min="0" max="1" step="0.05">
+            </div>
+            
+            <button onclick="findDuplicates()" class="btn btn-primary">🔁 Tìm Ảnh Trùng</button>
+            
+            <div class="loading" id="dupLoading">
+                <div class="spinner"></div>
+                <p>Đang phân tích...</p>
+            </div>
+            
+            <div id="dupResults" class="results"></div>
+        </div>
+    </div>
+    
+    <script>
+        // API URL - THAY ĐỔI NẾU CẦN
+        const API_BASE = 'http://localhost:8000/api';
+        
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+        
+        // File preview
+        document.getElementById('uploadFile').addEventListener('change', function(e) {
+            previewImage(e.target, 'uploadPreview', 'uploadLabel');
+        });
+        
+        document.getElementById('searchFile').addEventListener('change', function(e) {
+            previewImage(e.target, 'searchPreview', 'searchLabel');
+        });
+        
+        function previewImage(input, previewId, labelId) {
+            const preview = document.getElementById(previewId);
+            const label = document.getElementById(labelId);
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.add('show');
+                    label.textContent = '✅ ' + input.files[0].name;
+                    label.classList.add('has-file');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        // Upload form
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('image', document.getElementById('uploadFile').files[0]);
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            
+            const loading = document.getElementById('uploadLoading');
+            const result = document.getElementById('uploadResult');
+            
+            loading.classList.add('show');
+            result.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_BASE}/upload/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <div class="alert alert-success">
+                            <h3>✅ Upload thành công!</h3>
+                            <p><strong>ID:</strong> ${data.image_id}</p>
+                            <p><strong>URL:</strong> <a href="${data.image_url}" target="_blank">${data.image_url}</a></p>
+                            <img src="${data.image_url}" style="max-width: 300px; border-radius: 8px; margin-top: 10px;">
+                        </div>
+                    `;
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('uploadPreview').classList.remove('show');
+                    document.getElementById('uploadLabel').textContent = '📁 Click để chọn ảnh';
+                    document.getElementById('uploadLabel').classList.remove('has-file');
+                } else {
+                    result.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Lỗi:</strong> ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Lỗi kết nối:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+        
+        // Search form
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('image', document.getElementById('searchFile').files[0]);
+            formData.append('threshold', document.getElementById('threshold').value);
+            formData.append('limit', document.getElementById('limit').value);
+            
+            const loading = document.getElementById('searchLoading');
+            const results = document.getElementById('searchResults');
+            
+            loading.classList.add('show');
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_BASE}/search/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.results.length > 0) {
+                    results.innerHTML = `<h3>Tìm thấy ${data.results_count} kết quả:</h3>`;
+                    
+                    data.results.forEach(item => {
+                        results.innerHTML += `
+                            <div class="result-item">
+                                <img src="${item.image_url}" class="result-image">
+                                <div class="result-info">
+                                    <h4>${item.title}</h4>
+                                    <p>${item.description || 'Không có mô tả'}</p>
+                                    <span class="similarity-badge">${item.similarity_score}% tương đồng</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    results.innerHTML = '<div class="alert alert-error">Không tìm thấy ảnh tương tự</div>';
+                }
+            } catch (error) {
+                results.innerHTML = `<div class="alert alert-error">Lỗi: ${error.message}</div>`;
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+        
+        // Find duplicates
+        async function findDuplicates() {
+            const threshold = document.getElementById('dupThreshold').value;
+            const loading = document.getElementById('dupLoading');
+            const results = document.getElementById('dupResults');
+            
+            loading.classList.add('show');
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_BASE}/duplicates/?threshold=${threshold}`);
+                const data = await response.json();
+                
+                if (response.ok && data.duplicates.length > 0) {
+                    results.innerHTML = `<h3>Tìm thấy ${data.duplicates_count} nhóm ảnh trùng:</h3>`;
+                    
+                    data.duplicates.forEach((group, index) => {
+                        results.innerHTML += `
+                            <div class="result-item">
+                                <div>
+                                    <h4>Nhóm ${index + 1}</h4>
+                                    <p><strong>Ảnh gốc:</strong> ${group.original.title}</p>
+                                    <img src="${group.original.url}" class="result-image">
+                                </div>
+                                <div class="result-info">
+                                    <p><strong>${group.duplicates.length} ảnh trùng:</strong></p>
+                                    ${group.duplicates.map(dup => `
+                                        <div style="margin: 10px 0;">
+                                            <img src="${dup.url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
+                                            ${dup.title} (${dup.similarity}%)
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    results.innerHTML = '<div class="alert alert-success">✅ Không tìm thấy ảnh trùng lặp</div>';
+                }
+            } catch (error) {
+                results.innerHTML = `<div class="alert alert-error">Lỗi: ${error.message}</div>`;
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>
