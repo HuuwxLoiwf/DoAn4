@@ -16,6 +16,11 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Tắt INFO và WARNING logs
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
